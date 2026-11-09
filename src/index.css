@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #16202e;
+  --color-brand: #1e3a5f;
+  --color-brand-soft: #e8eef6;
+  --font-sans: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-contract: "Noto Naskh Arabic", "Traditional Arabic", serif;
+  --font-arabic: "Noto Naskh Arabic", "Traditional Arabic", "Segoe UI", sans-serif;
+}
+
+body {
+  @apply bg-slate-100 text-ink antialiased;
+}
+
+[dir="rtl"] input, [dir="rtl"] textarea, input[dir="rtl"], textarea[dir="rtl"] {
+  font-family: var(--font-arabic);
+}
+
+/* ---------- document pages (contracts and CVs) ---------- */
+.doc-page {
+  font-family: var(--font-contract);
+  background: #fff;
+  color: #000;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12), 0 8px 24px rgb(0 0 0 / 0.08);
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+.doc-p {
+  margin: 0;
+  white-space: pre-wrap;
+  tab-size: 36pt;
+  overflow-wrap: break-word;
+}
+.doc-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.doc-td { vertical-align: top; padding: 0 5.4pt; }
+.doc-td-border { border: 0.5pt solid #000; }
+/* fields: a dotted writing line like a paper form, with a small grey number to match the side form */
+.doc-line { display: inline-block; max-width: 100%; border-bottom: 1.2px dotted currentColor; line-height: 1; }
+/* screen only (print draws fields without these classes, in black): a missing field stands out in amber */
+.doc-blank { cursor: pointer; border-radius: 3px; color: #b45309; transition: background-color .2s; }
+.doc-blank .doc-line { border-bottom-width: 1.6px; }
+.doc-num { font-family: Inter, system-ui, sans-serif; font-size: 7.5pt; font-weight: 500; color: #94a3b8; margin-inline: 1px; vertical-align: super; line-height: 0; }
+/* typed text in dark blue so filled fields can be checked at a glance; !important beats a run's own Word colour */
+.doc-filled { cursor: pointer; border-radius: 3px; color: #1e40af !important; transition: background-color .2s, box-shadow .2s; }
+.doc-filled:hover, .doc-blank:hover { background: rgb(37 99 235 / 0.05); }
+.doc-field-active { background: rgb(37 99 235 / 0.09); box-shadow: 0 0 0 3px rgb(37 99 235 / 0.09); }
+.doc-field-active .doc-line { border-bottom-color: #2563eb; }
+.doc-editing { outline: none; caret-color: #2563eb; }
+.doc-editing [data-run] { cursor: pointer; user-select: all; }
+.doc-gender { border-radius: 3px; background: rgb(30 58 95 / 0.07); }
+
+/* ---------- printing: only the document leaves the printer ---------- */
+/* The printable copy is rendered straight under <body> (see PrintPortal); the
+   app itself is hidden so it can't add blank pages. Page margins come from @page. */
+.print-root { display: none; }
+
+@media print {
+  html, body { background: #fff !important; }
+  body > *:not(.print-root) { display: none !important; }
+  .print-root { display: block; }
+  .print-root .doc-page { box-shadow: none; padding: 0 !important; width: auto !important; min-height: 0 !important; margin: 0; }
+  .print-root .cv-page { box-shadow: none; margin: 0; }
+}
+

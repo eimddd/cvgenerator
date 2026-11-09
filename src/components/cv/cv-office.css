@@ -1,0 +1,77 @@
+/* ---------- three simple CVs copied from the office's Word files ----------
+   Sizes are in pt, measured on the A4 PDFs. Caladea and Carlito are metric copies
+   of Cambria and Calibri, used on computers without the Microsoft fonts. */
+.cvo { position: relative; overflow: hidden; color: #000; line-height: 1.25; }
+.cvo ul { margin: 0; padding: 0; }
+.cvo section { margin: 0; }
+.cvo bdi { unicode-bidi: isolate; }
+
+/* ===== Bleu diagonal (navy / light-blue header, grey sidebar) ===== */
+.cvo-diagonal { display: grid; grid-template-columns: 212pt 1fr; background: linear-gradient(to right, #f1f1f1 212pt, #fff 212pt); font-family: Cambria, Caladea, Georgia, serif; font-size: 11pt; }
+.cvz-shapes { position: absolute; inset-inline-start: 0; top: 0; width: 100%; height: 220pt; z-index: 0; }
+[dir="rtl"] .cvz-shapes { transform: scaleX(-1); }
+[dir="rtl"].cvo-diagonal { background: linear-gradient(to left, #f1f1f1 212pt, #fff 212pt); }
+.cvz-photo { position: absolute; top: 42pt; inset-inline-start: 54pt; width: 132pt; height: 132pt; border-radius: 50%; object-fit: cover; border: 4pt solid #fff; z-index: 2; }
+.cvz-name { position: absolute; top: 62pt; inset-inline-start: 240pt; inset-inline-end: 18pt; z-index: 2; font-size: 25pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4pt; line-height: 1.1; color: #000; }
+.cvz-side { padding: 218pt 16pt 24pt 19pt; position: relative; z-index: 1; }
+.cvz-main { padding: 140pt 22pt 24pt 13pt; position: relative; z-index: 1; }
+.cvo-diagonal h3 { font-size: 14pt; font-weight: 400; text-transform: uppercase; letter-spacing: 0.3pt; border-bottom: 1pt solid #000; padding-bottom: 1pt; margin: 0 0 9pt; line-height: 1.15; }
+.cvo-diagonal section { margin-bottom: 20pt; }
+.cvz-title { font-size: 11pt; font-style: italic; color: #1f3863; margin: -2pt 0 14pt; }
+.cvo-diagonal .cv-contact { display: flex; gap: 8pt; margin-bottom: 5pt; font-size: 11pt; word-break: break-word; }
+.cvo-diagonal .cv-contact:nth-child(3) bdi { color: #0563c1; text-decoration: underline; }
+.cvo-diagonal .cv-icon { width: 11pt; height: 11pt; color: #000; }
+.cvz-facts { list-style: disc; padding-inline-start: 14pt !important; }
+.cvz-facts li { font-size: 11pt; margin-bottom: 6pt; }
+.cvz-facts strong { display: block; font-family: Arial, Helvetica, sans-serif; font-size: 10.5pt; margin: 4pt 0 0 4pt; }
+.cvz-skills { list-style: disc; padding-inline-start: 18pt !important; font-family: Arial, Helvetica, sans-serif; font-size: 10pt; }
+.cvz-skills li { margin-bottom: 10pt; }
+.cvz-skills i { display: block; width: 95pt; height: 6pt; border-radius: 3pt; background: #1f3863; margin-top: 4pt; }
+.cvz-lang { display: grid; grid-template-columns: 48pt 1fr; align-items: center; font-family: Arial, Helvetica, sans-serif; font-size: 10pt; margin-bottom: 5pt; }
+.cvz-lang i { display: block; height: 6pt; border-radius: 3pt; background: #1f3863; }
+.cvz-profile { text-align: justify; font-size: 11pt; line-height: 1.3; white-space: pre-wrap; }
+.cvz-item { margin: 0 0 12pt 20pt; break-inside: avoid; }
+.cvz-item h4 { font-size: 13pt; font-weight: 400; margin: 0 0 6pt; }
+.cvz-sub { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; margin-inline-start: -16pt; }
+.cvz-when { color: #7f7f7f; }
+.cvo-diagonal .cvz-main ul { list-style: disc; padding-inline-start: 18pt; }
+
+/* ===== Courbes bleu-gris (curves on the left, grey title bars) ===== */
+.cvo-curves { font-family: "Times New Roman", Tinos, Times, serif; font-size: 12pt; }
+.cvm-curves { position: absolute; top: 0; inset-inline-start: 0; width: 80pt; height: 100%; }
+[dir="rtl"] .cvm-curves { transform: scaleX(-1); }
+.cvm-body { padding: 14pt 26pt 28pt 92pt; }
+[dir="rtl"] .cvm-body { padding: 14pt 92pt 28pt 26pt; }
+.cvm-name { font-family: Georgia, serif; font-weight: 700; font-size: 22pt; color: #2e5486; text-align: center; text-transform: uppercase; margin-bottom: 8pt; }
+.cvm-title { text-align: center; font-style: italic; color: #2e5486; margin: -4pt 0 6pt; }
+.cvm-info { line-height: 1.5; margin-bottom: 14pt; }
+.cvm-info b { font-size: 10.5pt; }
+.cvm-bar { background: #7f7f7f; color: #17365d; font-weight: 700; font-size: 12pt; text-align: center; padding: 3pt 6pt 2pt; margin: 16pt -8pt 10pt -8pt; line-height: 1.25; }
+.cvo-curves ul { list-style: disc; padding-inline-start: 34pt; line-height: 1.35; }
+.cvo-curves li { margin-bottom: 1pt; }
+.cvm-profile { text-align: justify; white-space: pre-wrap; margin: 0 6pt; }
+
+/* ===== Classique encadré (black frame, dark-red italic titles over a navy rule) ===== */
+.cvo-framed { font-family: Cambria, Caladea, Georgia, serif; font-size: 11.5pt; padding: 30pt 44pt 40pt; }
+.cva-frame { position: absolute; inset: 25pt 28pt 28pt 23pt; border-top: 2pt solid #000; border-bottom: 2pt solid #000; pointer-events: none; }
+.cva-frame::after { content: ""; position: absolute; top: -2pt; inset-inline-end: 0; width: 0; height: 317pt; border-inline-end: 2pt solid #000; }
+.cva-name { font-size: 26pt; font-weight: 700; font-style: italic; color: #943634; text-decoration: underline; text-underline-offset: 3pt; text-decoration-thickness: 1.5pt; text-align: center; margin: 0 0 14pt; }
+.cva-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12pt; margin: 0 0 6pt 18pt; }
+[dir="rtl"] .cva-top { margin: 0 18pt 6pt 0; }
+.cva-info { border-collapse: collapse; font-family: Calibri, Carlito, Arial, sans-serif; font-size: 9.5pt; }
+.cva-info td { padding: 0 0 1.5pt; vertical-align: top; }
+.cva-info td:first-child { width: 112pt; }
+.cva-info td:nth-child(2) { width: 30pt; }
+.cva-gsm { font-weight: 700; font-size: 11pt; }
+.cva-photo { width: 74pt; height: 101pt; object-fit: cover; margin-inline-end: 4pt; }
+.cva-title { font-style: italic; color: #943634; text-align: center; margin-bottom: 4pt; }
+.cva-profile-h { font-size: 13pt; font-weight: 700; font-style: italic; color: #0070c0; }
+.cva-profile { font-style: italic; white-space: pre-wrap; margin-bottom: 6pt; }
+.cva-h { font-size: 13.5pt; font-weight: 700; font-style: italic; color: #943634; text-align: center; padding-bottom: 6pt; border-bottom: 2pt solid #000080; margin: 8pt 0 10pt; }
+.cva-ticks { list-style: none; padding-inline-start: 14pt !important; font-style: italic; margin-bottom: 6pt !important; }
+.cva-ticks li { margin-bottom: 4pt; }
+.cva-ticks li::before { content: "✓"; font-style: normal; margin-inline-end: 8pt; }
+.cva-lang { display: inline-block; min-width: 80pt; }
+
+/* Arabic versions keep each layout but use an Arabic font */
+.cvo.cv-ar, .cvo.cv-ar .cvz-sub, .cvo.cv-ar .cvz-skills, .cvo.cv-ar .cvz-lang, .cvo.cv-ar .cva-info, .cvo.cv-ar .cvz-facts strong { font-family: "Noto Naskh Arabic", "Traditional Arabic", serif; }

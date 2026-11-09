@@ -1,0 +1,79 @@
+/* ---------- "Essentiel" and "Horizon": simple CVs that always fill one A4 page ----------
+   --fs (font) and --sp (spacing) are set by the auto-fit in CvDocument: roomier when there is
+   little to say, tighter when there is a lot. Everything below scales with them. */
+.cvn {
+  --fs: 1; --sp: 1;
+  --side: color-mix(in srgb, var(--accent) 8%, #fff);
+  --line: color-mix(in srgb, var(--accent) 22%, #fff);
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  font-size: calc(9.6pt * var(--fs));
+  line-height: 1.45;
+  color: #1f2937;
+}
+.cvn.cv-ar { font-family: "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif; }
+.cvn h1, .cvn h3, .cvn h4, .cvn p, .cvn ul { margin: 0; padding: 0; }
+.cvn ul { list-style: none; }
+.cvn section { margin-bottom: calc(5mm * var(--sp)); }
+.cvn section:last-child { margin-bottom: 0; }
+.cvn h3 {
+  font-size: 0.86em; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent);
+  margin-bottom: calc(2.6mm * var(--sp)); padding-bottom: calc(1.2mm * var(--sp)); border-bottom: 1px solid var(--line);
+}
+.cv-ar.cvn h3 { letter-spacing: 0; }
+.cvn-title { color: var(--accent); font-weight: 600; font-size: 1.15em; margin-top: 1mm; }
+.cvn-profile { white-space: pre-wrap; text-align: justify; color: #374151; }
+
+/* entries: period in a narrow column, then degree / job and place */
+.cvn-entry { display: grid; grid-template-columns: 24mm 1fr; gap: 3mm; margin-bottom: calc(3.4mm * var(--sp)); break-inside: avoid; }
+.cvn-entry:last-child { margin-bottom: 0; }
+.cvn-when { font-size: 0.86em; color: var(--accent); font-weight: 600; padding-top: 0.15em; }
+.cvn-entry h4 { font-size: 1.04em; font-weight: 600; color: #111827; }
+.cvn-where { color: #6b7280; font-size: 0.93em; }
+.cvn .cv-bullets { margin-top: 1mm; }
+
+.cvn-ticks li { position: relative; padding-inline-start: 1.25em; margin-bottom: calc(1.3mm * var(--sp)); }
+.cvn-ticks li::before { content: ""; position: absolute; inset-inline-start: 0.15em; top: 0.38em; width: 0.42em; height: 0.7em; border: solid var(--accent); border-width: 0 0.14em 0.14em 0; transform: rotate(45deg); }
+.cv-ar .cvn-ticks li::before { transform: scaleX(-1) rotate(45deg); }
+.cvn-chips { display: flex; flex-wrap: wrap; gap: calc(1.6mm * var(--sp)) 1.6mm; }
+.cvn-chips li { background: var(--side); border: 1px solid var(--line); color: #374151; border-radius: 999px; padding: 0.25em 0.8em; font-size: 0.93em; }
+
+.cvn-dots { display: inline-flex; gap: 0.28em; }
+.cvn-dots i { width: 0.62em; height: 0.62em; border-radius: 50%; background: var(--line); }
+.cvn-dots i.on { background: var(--accent); }
+
+/* ===== Essentiel: side column ===== */
+.cvn-essentiel { background: linear-gradient(to right, var(--side) 68mm, #fff 68mm); }
+.cvn-essentiel[dir="rtl"] { background: linear-gradient(to left, var(--side) 68mm, #fff 68mm); }
+.cvn-cols { display: grid; grid-template-columns: 68mm 1fr; align-items: start; }
+.cvn-side { padding: calc(12mm * min(var(--sp), 1.4)) 7mm 10mm; }
+.cvn-main { padding: calc(14mm * min(var(--sp), 1.4)) 11mm 10mm 9mm; }
+.cvn-photo { display: block; width: calc(34mm * min(var(--fs), 1.08)); aspect-ratio: 1; border-radius: 50%; object-fit: cover; margin: 0 auto calc(7mm * var(--sp)); border: 1.2mm solid #fff; box-shadow: 0 0 0 0.4mm var(--line); }
+.cvn-initials { display: flex; align-items: center; justify-content: center; background: var(--accent); color: #fff; font-size: 2.6em; font-weight: 600; letter-spacing: 0.04em; }
+.cvn-row { margin-bottom: calc(2mm * var(--sp)); overflow-wrap: anywhere; }
+.cvn-row span { display: block; font-size: 0.8em; color: #6b7280; text-transform: uppercase; letter-spacing: 0.06em; }
+.cv-ar .cvn-row span { letter-spacing: 0; }
+.cvn-row strong { font-weight: 600; color: #111827; }
+.cvn-lang { display: flex; align-items: center; justify-content: space-between; gap: 2mm; margin-bottom: calc(2mm * var(--sp)); }
+.cvn-lang small { display: block; color: #6b7280; font-size: 0.82em; }
+.cvn-head { margin-bottom: calc(7mm * var(--sp)); }
+.cvn-head h1 { font-size: 2.5em; line-height: 1.08; font-weight: 700; letter-spacing: -0.01em; color: #111827; }
+
+/* ===== Horizon: single column ===== */
+.cvh { padding: 0 14mm calc(11mm * min(var(--sp), 1.5)); }
+.cvh-head { display: flex; align-items: center; justify-content: space-between; gap: 8mm; padding: calc(13mm * min(var(--sp), 1.5)) 0 calc(6mm * var(--sp)); border-top: 3.5mm solid var(--accent); margin: 0 -14mm calc(5mm * var(--sp)); padding-inline: 14mm; background: var(--side); }
+.cvh-head h1 { font-size: 2.6em; line-height: 1.08; font-weight: 700; color: #111827; letter-spacing: -0.01em; }
+.cvh-photo { width: calc(30mm * min(var(--fs), 1.08)); aspect-ratio: 1; border-radius: 4mm; object-fit: cover; flex-shrink: 0; border: 1mm solid #fff; }
+.cvh-info { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(2.4mm * var(--sp)) 6mm; margin-bottom: calc(6mm * var(--sp)); }
+.cvh-info span { display: block; font-size: 0.8em; color: #6b7280; text-transform: uppercase; letter-spacing: 0.06em; }
+.cv-ar .cvh-info span { letter-spacing: 0; }
+.cvh-info bdi { font-weight: 600; color: #111827; overflow-wrap: anywhere; }
+.cvh-trio { display: grid; gap: 8mm; margin-bottom: calc(5mm * var(--sp)); }
+.cvh-trio section { margin-bottom: 0; }
+.cvh-lang { margin-bottom: calc(2.4mm * var(--sp)); }
+.cvh-lang > div:first-child { display: flex; justify-content: space-between; gap: 2mm; }
+.cvh-lang small { color: #6b7280; font-size: 0.85em; }
+.cvn .cv-bar { height: 1.6mm; border-radius: 1mm; background: var(--line); margin-top: 1mm; overflow: hidden; }
+.cvn .cv-bar i { display: block; height: 100%; background: var(--accent); border-radius: 1mm; }
+/* the main column's extra room (--msp, set by the auto-fit) goes between sections only */
+.cvn-main > section, .cvn-main > .cvn-head { margin-bottom: calc(5mm * var(--msp, var(--sp))); }
+.cvn-main > section:last-child { margin-bottom: 0; }

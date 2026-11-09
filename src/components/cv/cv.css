@@ -1,0 +1,92 @@
+/* ---------- CV templates (A4) ---------- */
+.cv-page {
+  --accent: #1e3a5f;
+  --ink: #111827;
+  --muted: #5b6573;
+  --soft: color-mix(in srgb, var(--accent) 9%, #fff);
+  width: 210mm;
+  min-height: 297mm;
+  background: #fff;
+  color: #1f2937;
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  font-size: 9.4pt;
+  line-height: 1.5;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12), 0 12px 32px rgb(0 0 0 / 0.08);
+  margin: 0 auto;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.cv-page.cv-ar { font-family: "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif; font-size: 9.8pt; line-height: 1.65; }
+.cv-page h1, .cv-page h3, .cv-page h4, .cv-page p { margin: 0; }
+.cv-page section { margin-bottom: 6mm; }
+.cv-page section:last-child { margin-bottom: 0; }
+.cv-icon { flex-shrink: 0; margin-top: 0.9mm; }
+.cv-desc { white-space: pre-wrap; }
+.cv-bullets { margin: 1mm 0 0; padding-inline-start: 4.2mm; }
+.cv-bullets li { margin-bottom: 0.5mm; }
+.cv-bullets li::marker { color: var(--accent); }
+.cv-entry { margin-bottom: 4mm; break-inside: avoid; }
+.cv-entry:last-child { margin-bottom: 0; }
+.cv-entry-head { display: flex; justify-content: space-between; align-items: baseline; gap: 4mm; }
+.cv-entry h4 { font-size: 10.2pt; font-weight: 650; color: var(--ink); }
+.cv-when { flex-shrink: 0; font-size: 8.3pt; font-weight: 600; color: var(--accent); white-space: nowrap; }
+.cv-where { color: var(--muted); font-size: 8.8pt; margin-top: 0.3mm; }
+.cv-entry .cv-desc, .cv-entry .cv-bullets { margin-top: 1.2mm; }
+.cv-contact { display: flex; gap: 2mm; align-items: flex-start; overflow-wrap: anywhere; }
+.cv-fact { display: flex; justify-content: space-between; gap: 3mm; margin-bottom: 1.2mm; }
+.cv-fact span { color: var(--muted); }
+.cv-fact strong { font-weight: 600; text-align: end; }
+.cv-lang { margin-bottom: 2.6mm; }
+.cv-lang-row { display: flex; justify-content: space-between; align-items: baseline; gap: 2mm; }
+.cv-lang-row span { font-size: 7.8pt; color: var(--muted); }
+.cv-bar { height: 1.4mm; border-radius: 1mm; background: color-mix(in srgb, var(--accent) 16%, #fff); margin-top: 1mm; overflow: hidden; }
+.cv-bar i { display: block; height: 100%; border-radius: 1mm; background: var(--accent); }
+.cv-cert { margin-bottom: 2mm; break-inside: avoid; }
+.cv-cert strong { display: block; font-weight: 600; color: var(--ink); }
+.cv-cert span { font-size: 8.4pt; color: var(--muted); }
+.cv-refs { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 6mm; }
+.cv-ref { display: flex; flex-direction: column; font-size: 8.6pt; color: var(--muted); break-inside: avoid; }
+.cv-ref strong { font-size: 9.4pt; color: var(--ink); font-weight: 600; }
+
+/* Modern Simple: banner header, then a main column and a slim side column */
+.cvs { padding: 15mm 15mm 13mm; }
+.cvs-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 8mm; padding-bottom: 6mm; margin-bottom: 7mm; border-bottom: 0.6mm solid var(--accent); }
+.cvs-id { display: flex; align-items: center; gap: 5mm; min-width: 0; }
+.cvs-photo { width: 24mm; height: 24mm; border-radius: 50%; object-fit: cover; }
+.cvs-header h1 { font-size: 25pt; font-weight: 750; letter-spacing: -0.02em; line-height: 1.1; color: var(--ink); }
+.cv-ar .cvs-header h1, .cv-ar .cvp-header h1 { letter-spacing: 0; }
+.cvs-title { font-size: 11.5pt; color: var(--accent); font-weight: 600; margin-top: 1.2mm; }
+.cvs-contacts { display: flex; flex-direction: column; gap: 1mm; font-size: 8.6pt; color: var(--muted); flex-shrink: 0; max-width: 68mm; }
+.cvs-body { display: grid; grid-template-columns: 1fr 55mm; gap: 9mm; }
+.cvs-body.cvs-single { grid-template-columns: 1fr; }
+.cvs h3 { font-size: 8.4pt; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 2.8mm; }
+.cv-ar.cvs h3, .cv-ar.cvp h3 { letter-spacing: 0; text-transform: none; font-size: 10pt; }
+.cvs-main .cv-entry { padding-inline-start: 3.5mm; border-inline-start: 0.4mm solid color-mix(in srgb, var(--accent) 25%, #fff); }
+.cvs-side { background: var(--soft); border-radius: 2.5mm; padding: 5mm; align-self: start; }
+.cvs-tags { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 1.4mm; }
+.cvs-tags li { background: #fff; border-radius: 1mm; padding: 0.5mm 2mm; font-size: 8.3pt; color: var(--ink); }
+
+/* Professional: full-height coloured sidebar painted by the page background */
+.cvp { display: grid; grid-template-columns: 70mm 1fr; background: linear-gradient(to right, var(--accent) 70mm, #fff 70mm); }
+.cvp[dir="rtl"] { background: linear-gradient(to left, var(--accent) 70mm, #fff 70mm); }
+.cvp-side { color: #fff; padding: 14mm 8mm 12mm; }
+.cvp-side h3 { font-size: 8.4pt; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #fff; margin-bottom: 2.6mm; padding-bottom: 1.4mm; border-bottom: 0.3mm solid rgb(255 255 255 / 0.35); }
+.cvp-side .cv-contact { margin-bottom: 1.6mm; color: rgb(255 255 255 / 0.92); }
+.cvp-side .cv-fact span, .cvp-side .cv-lang-row span { color: rgb(255 255 255 / 0.72); }
+.cvp-side .cv-bar { background: rgb(255 255 255 / 0.25); }
+.cvp-side .cv-bar i { background: #fff; }
+.cvp-photo, .cvp-monogram { width: 38mm; height: 38mm; border-radius: 50%; display: block; margin: 0 auto 9mm; border: 1.2mm solid rgb(255 255 255 / 0.9); }
+.cvp-photo { object-fit: cover; }
+.cvp-monogram { display: flex; align-items: center; justify-content: center; font-size: 26pt; font-weight: 700; background: rgb(255 255 255 / 0.15); text-transform: uppercase; }
+.cvp-skills { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 1.4mm; }
+.cvp-skills li { background: rgb(255 255 255 / 0.16); border-radius: 1mm; padding: 0.5mm 2mm; font-size: 8.3pt; }
+.cvp-main { padding: 14mm 12mm 12mm; }
+.cvp-header { margin: 2mm 0 8mm; padding-bottom: 6mm; border-bottom: 0.3mm solid #e5e7eb; }
+.cvp-header h1 { font-size: 27pt; font-weight: 800; letter-spacing: -0.02em; line-height: 1.08; color: var(--ink); }
+.cvp-title { display: inline-block; margin-top: 2.5mm; padding: 0.8mm 3mm; border-radius: 1mm; background: var(--soft); color: var(--accent); font-weight: 650; font-size: 10.5pt; }
+.cvp-main h3 { display: flex; align-items: center; gap: 2.5mm; font-size: 9pt; font-weight: 750; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink); margin-bottom: 3.2mm; }
+.cvp-main h3::before { content: ""; width: 2.4mm; height: 2.4mm; border-radius: 0.6mm; background: var(--accent); }
+.cvp-main .cv-entry { position: relative; padding-inline-start: 5mm; }
+.cvp-main .cv-entry::before { content: ""; position: absolute; inset-inline-start: 0; top: 1.6mm; width: 1.8mm; height: 1.8mm; border-radius: 50%; border: 0.5mm solid var(--accent); background: #fff; }
+.cvp-main .cv-entry::after { content: ""; position: absolute; inset-inline-start: 0.85mm; top: 4.4mm; bottom: -3.5mm; width: 0.3mm; background: color-mix(in srgb, var(--accent) 25%, #fff); }
+.cvp-main .cv-entry:last-child::after { display: none; }
