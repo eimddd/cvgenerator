@@ -3,8 +3,8 @@ import { supabase } from '../lib/supabase';
 import { useSession } from '../lib/auth';
 
 const NAV = [
-  { to: '/contracts', label: 'Contrats', icon: 'M7 3h7l5 5v13H7z M14 3v5h5 M10 13h6 M10 17h6' },
-  { to: '/cvs', label: 'CV', icon: 'M6 3h12v18H6z M12 7.5a2 2 0 1 0 0 4 2 2 0 0 0 0-4z M9 16c.6-1.6 1.6-2.5 3-2.5s2.4.9 3 2.5' },];
+  { to: '/contracts', label: 'Contracts', icon: 'M7 3h7l5 5v13H7z M14 3v5h5 M10 13h6 M10 17h6' },
+  { to: '/cvs', label: 'CVs', icon: 'M6 3h12v18H6z M12 7.5a2 2 0 1 0 0 4 2 2 0 0 0 0-4z M9 16c.6-1.6 1.6-2.5 3-2.5s2.4.9 3 2.5' },];
 
 const Icon = ({ d }) => (
   <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
@@ -41,7 +41,7 @@ export default function Layout() {
         <div className="hidden px-5 pt-8 text-xs text-slate-500 md:absolute md:bottom-0 md:block md:w-60 md:pb-5">
           <div className="truncate" title={session?.user?.email}>{session?.user?.email}</div>
           <button type="button" onClick={() => supabase.auth.signOut()} className="mt-2 font-medium text-brand hover:underline">
-            Se déconnecter
+            Sign out
           </button>
         </div>
       </aside>
@@ -49,7 +49,7 @@ export default function Layout() {
         <Outlet />
         <div className="no-print px-5 pb-6 text-xs text-slate-400 md:hidden">
           {session?.user?.email} ·{' '}
-          <button type="button" onClick={() => supabase.auth.signOut()} className="font-medium text-brand">Se déconnecter</button>
+          <button type="button" onClick={() => supabase.auth.signOut()} className="font-medium text-brand">Sign out</button>
         </div>
       </main>
     </div>

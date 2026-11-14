@@ -25,7 +25,7 @@ const allParagraphs = (blocks) => blocks.flatMap((b) => (b.type === 'p' ? [b] : 
 
 function template(blocks, page, warning) {
   const text = allParagraphs(blocks).flatMap((b) => b.runs).map((r) => r.t || '').join(' ');
-  if (!text.trim()) throw new Error('لم يُعثر على أي نص في هذا الملف.');
+  if (!text.trim()) throw new Error('No text was found in this file.');
   const first = allParagraphs(blocks).map((b) => b.runs.map((r) => r.t || '').join('').trim()).find(Boolean) || '';
   return { template: { id: 'new', title: first.length <= 60 ? first : '', category: '', lang: isRtl(text) ? 'ar' : 'fr', page, parties: {}, fields: [], blocks }, warning };
 }
@@ -43,7 +43,7 @@ export function importText(text) {
 // ---------- Word (.docx) ----------
 export async function importDocx(buffer) {
   const { page, blocks, mediaCount } = await readDocx(buffer);
-  return template(blocks, page, mediaCount ? 'هذا الملف يحتوي على صور أو شعارات لم يتم استيرادها.' : undefined);
+  return template(blocks, page, mediaCount ? 'This file contains pictures or logos: they were not imported.' : undefined);
 }
 
 // ---------- PDF ----------
@@ -161,9 +161,9 @@ export async function importPdf(buffer, onProgress) {
 async function ocrPdf(pdf, onProgress, scrambled) {
   const { createWorker } = await import('tesseract.js');
   let current = 1;
-  onProgress?.('جارٍ تحميل أدوات التعرف على النص (مرة واحدة فقط)…');
+  onProgress?.('Loading text recognition (first time only)…');
   const worker = await createWorker(['ara', 'fra', 'eng'], 1, {
-    logger: (m) => { if (m.status === 'recognizing text') onProgress?.(`التعرف على النص: الصفحة ${current} من ${pdf.numPages} (${Math.round(m.progress * 100)}%)`); },
+    logger: (m) => { if (m.status === 'recognizing text') onProgress?.(`Reading text: page ${current} of ${pdf.numPages} (${Math.round(m.progress * 100)}%)`); },
   });
   const pages = [];
   try {
@@ -186,16 +186,16 @@ async function ocrPdf(pdf, onProgress, scrambled) {
   } finally {
     await worker.terminate();
   }
-  return template(linesToBlocks(pages), A4, `${scrambled ? 'نص هذا الملف غير قابل للقراءة مباشرة' : 'هذا الملف صورة ممسوحة'}: تم التعرف على النص آلياً وقد يحتوي على أخطاء، ولا يُحتفظ بالخط الغليظ. راجع كل الأسطر بعناية قبل الحفظ.`);
+  return template(linesToBlocks(pages), A4, `${scrambled ? 'This PDF’s text can’t be read directly' : 'This PDF is a scanned image'}: the text was recognised automatically and may contain mistakes (bold is not kept). Check every line before saving.`);
 }
 
 // ---------- entry point for an uploaded file ----------
 const MAX_MB = 25;
 export async function importFile(file, onProgress) {
-  if (file.size > MAX_MB * 1048576) throw new Error(`الملف كبير جداً (الحد الأقصى ${MAX_MB} ميغابايت).`);
+  if (file.size > MAX_MB * 1048576) throw new Error(`File too large (${MAX_MB} MB maximum).`);
   const name = file.name.toLowerCase();
-  if (name.endsWith('.doc')) throw new Error('صيغة ‎.doc القديمة غير مدعومة: افتح الملف في Word واحفظه بصيغة ‎.docx ثم أعد المحاولة.');
-  if (!name.endsWith('.docx') && !name.endsWith('.pdf')) throw new Error('يرجى اختيار ملف Word ‏(‎.docx) أو PDF.');
+  if (name.endsWith('.doc')) throw new Error('The old .doc format is not supported: open the file in Word, save it as .docx, then try again.');
+  if (!name.endsWith('.docx') && !name.endsWith('.pdf')) throw new Error('Choose a Word (.docx) or PDF file.');
   const buffer = await file.arrayBuffer();
   return name.endsWith('.pdf') ? importPdf(buffer, onProgress) : importDocx(buffer);
 }

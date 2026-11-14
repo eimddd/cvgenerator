@@ -16,7 +16,7 @@ export const CV_TEXT = {
   },
   en: {
     profile: 'Profile', experience: 'Work experience', education: 'Education', skills: 'Skills', languages: 'Languages',
-    certificates: 'Certificates', interests: 'Interests', references: 'References', contact: 'Contact', personal: 'Details',
+    certificates: 'Certificates', interests: 'Interests', references: 'References', contact: 'Contact', personal: 'Personal details',
     born: 'Date of birth', birthplace: 'Place of birth', address: 'Address', nationality: 'Nationality', marital: 'Marital status', license: 'Driving licence', present: 'Present',
     levels: { A1: 'Beginner', A2: 'Elementary', B1: 'Intermediate', B2: 'Upper intermediate', C1: 'Advanced', C2: 'Proficient', native: 'Native', debutant: 'Beginner', moyen: 'Intermediate', bien: 'Good', tres_bien: 'Very good', courant: 'Fluent' },
     maritals: ['Single', 'Married', 'Divorced', 'Widowed'],
@@ -34,7 +34,7 @@ export const LEVELS = ['native', 'debutant', 'moyen', 'bien', 'tres_bien', 'cour
 const CEFR = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 const LEVEL_PCT = { debutant: 20, A1: 17, A2: 33, moyen: 45, B1: 50, bien: 62, B2: 67, tres_bien: 78, C1: 83, courant: 90, C2: 100, native: 100 };
 export const ACCENTS = ['#1e3a5f', '#0f766e', '#7c3aed', '#be123c', '#c2410c', '#334155'];
-export const CV_TEMPLATES = { essentiel: 'Essentiel (colonne)', horizon: 'Horizon', simple: 'Modern Simple', professional: 'Professional', diagonal: 'Bleu diagonal', curves: 'Courbes bleu-gris', framed: 'Classique encadré' };
+export const CV_TEMPLATES = { essentiel: 'Essential (side column)', horizon: 'Horizon', simple: 'Modern Simple', professional: 'Professional', diagonal: 'Blue diagonal', curves: 'Blue-grey curves', framed: 'Classic framed' };
 // these copy a Word CV's own colours, so the accent picker doesn't apply
 export const FIXED_COLOURS = ['diagonal', 'curves', 'framed'];
 

@@ -1,5 +1,7 @@
 // Renders a contract template (extracted from Word) with the form values filled in.
 // Measurements are in points so the page matches the Word layout at print time.
+import { useLayoutEffect, useRef, useState } from 'react';
+import { PageSheets, paginate } from './pages';
 const ARABIC = /[؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿]/;
 
 // Every contract uses one clear Arabic web font, so it looks and prints the same on any PC.
@@ -68,7 +70,8 @@ function Run({ r, values, mode, activeField, onFieldClick }) {
     // 'print' leaves optional gaps out; the blank copy draws every line, to fill in by pen
     if (mode === 'print' && r.optional) return null;
     const line = <span className="doc-line" style={{ width: LENGTH_CM[r.len] }}>{' '}</span>;
-    if (mode === 'print' || mode === 'blank') return <span style={style}>{line}</span>;
+    // the number is kept (invisible) so a line wraps exactly as in the editor
+    if (mode === 'print' || mode === 'blank') return <span style={style}><sup className="doc-num doc-num-ghost">{r.num}</sup>{line}</span>;
     const { label, optional, num, len, ...run } = r;
     return (
       <span
@@ -108,7 +111,7 @@ function Paragraph({ p, index, ...rest }) {
     lineHeight,
     fontSize: `${size}pt`,
     fontFamily: fontStack(font, ar),
-    breakBefore: p.runs[0]?.t?.startsWith('\f') ? 'page' : undefined,
+    breakBefore: p.pb || p.runs[0]?.t?.startsWith('\f') ? 'page' : undefined,
   };
   // list bullet/number sits in the hanging indent, like Word's marker + tab
   const hanging = p.indFirst < 0 ? -p.indFirst : 0;
@@ -118,7 +121,8 @@ function Paragraph({ p, index, ...rest }) {
     </span>
   );
   return (
-    <p className="doc-p" style={style} data-b={rest.mode === 'edit' ? index : undefined}>
+    // data-pb: starts a new page ("" = the editor's Page break, "f" = a page break from Word)
+    <p className="doc-p" style={style} data-b={rest.mode === 'edit' ? index : undefined} data-pb={p.pb ? '' : style.breakBefore ? 'f' : undefined}>
       {marker}
       {empty && !marker ? ' ' : p.runs.map((r, i) => <Run key={i} r={r} {...rest} />)}
     </p>
@@ -185,11 +189,37 @@ export function fieldNumbers(template) {
   walk(template.blocks);
   return n;
 }
-export const fieldLabel = (n) => `الخانة ${n}`;
+export const fieldLabel = (n) => `Field ${n}`;
 
 // mode: 'screen' shows empty fields by number; 'print' prints them as dotted gaps;
 // 'blank' prints every gap as dots; 'edit' is the template editor (fields are locked chips).
-export default function DocRenderer({ template, values = {}, mode = 'screen', activeField, onFieldClick }) {
+// paged: on screen, draw separate A4 sheets; off (print copies), only mark where the printer breaks.
+// 'edit' is drawn once as static HTML for the template editor, which lays out its own pages.
+export default function DocRenderer({ paged = true, ...props }) {
+  return props.mode === 'edit' ? <DocPage {...props} /> : <Paged paged={paged} {...props} />;
+}
+
+function Paged({ paged, ...props }) {
+  const doc = useRef(null);
+  const [pages, setPages] = useState(1);
+  // after every render (values change the text), and again once the web fonts have loaded
+  useLayoutEffect(() => {
+    let on = true;
+    const run = () => on && setPages(paginate(doc.current, props.template.page, paged));
+    run();
+    document.fonts?.ready.then(run);
+    return () => { on = false; };
+  });
+  if (!paged) return <DocPage {...props} ref={doc} />;
+  return (
+    <div className="doc-pages" style={{ width: `${props.template.page.width}pt` }}>
+      <PageSheets page={props.template.page} count={pages} />
+      <DocPage {...props} ref={doc} sheets />
+    </div>
+  );
+}
+
+function DocPage({ template, values = {}, mode = 'screen', activeField, onFieldClick, ref, sheets }) {
   const { page } = template;
   const byKey = Object.fromEntries(template.fields.map((f) => [f.key, f]));
   const nums = fieldNumbers(template);
@@ -203,7 +233,8 @@ export default function DocRenderer({ template, values = {}, mode = 'screen', ac
   const m = page.margins;
   return (
     <div
-      className="doc-page"
+      ref={ref}
+      className={sheets ? 'doc-page doc-paged' : 'doc-page'}
       style={{
         width: `${page.width}pt`,
         minHeight: `${page.height}pt`,

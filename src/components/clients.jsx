@@ -18,30 +18,30 @@ export function ClientForm({ client, onSaved, onClose }) {
 
   return (
     <Modal
-      title={c.id ? 'Modifier le client' : 'Nouveau client'}
+      title={c.id ? 'Edit client' : 'New client'}
       onClose={onClose}
       wide
-      footer={<><Button onClick={onClose}>Annuler</Button><Button variant="primary" type="submit" form="client-form" disabled={busy}>{busy ? 'Enregistrement…' : 'Enregistrer'}</Button></>}
+      footer={<><Button onClick={onClose}>Cancel</Button><Button variant="primary" type="submit" form="client-form" disabled={busy}>{busy ? 'Saving…' : 'Save'}</Button></>}
     >
       <form id="client-form" onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
         <ErrorNote error={error} />
-        <Field label="Nom complet (tel qu’il doit apparaître sur les documents)" className="sm:col-span-2">
+        <Field label="Full name (as it should appear on documents)" className="sm:col-span-2">
           <Input required autoFocus value={c.full_name} onChange={set('full_name')} />
         </Field>
-        <Field label="Civilité">
+        <Field label="Title">
           <Select value={c.gender} onChange={set('gender')}>
-            <option value="m">Monsieur — السيد</option>
-            <option value="f">Madame — السيدة</option>
+            <option value="m">Mr — السيد</option>
+            <option value="f">Mrs/Ms — السيدة</option>
           </Select>
         </Field>
-        <Field label="N° CIN"><Input dir="ltr" value={c.cin} onChange={set('cin')} /></Field>
-        <Field label="Date de naissance"><Input value={c.birth_date} onChange={set('birth_date')} placeholder="jj/mm/aaaa" /></Field>
-        <Field label="Lieu de naissance"><Input value={c.birth_place} onChange={set('birth_place')} /></Field>
-        <Field label="Nationalité"><Input value={c.nationality} onChange={set('nationality')} /></Field>
-        <Field label="Profession"><Input value={c.job} onChange={set('job')} /></Field>
-        <Field label="Adresse" className="sm:col-span-2"><Input value={c.address} onChange={set('address')} /></Field>
-        <Field label="Téléphone"><Input dir="ltr" value={c.phone} onChange={set('phone')} /></Field>
-        <Field label="E-mail"><Input dir="ltr" type="email" value={c.email} onChange={set('email')} /></Field>
+        <Field label="ID card number (CIN)"><Input dir="ltr" value={c.cin} onChange={set('cin')} /></Field>
+        <Field label="Date of birth"><Input value={c.birth_date} onChange={set('birth_date')} placeholder="DD/MM/YYYY" /></Field>
+        <Field label="Place of birth"><Input value={c.birth_place} onChange={set('birth_place')} /></Field>
+        <Field label="Nationality"><Input value={c.nationality} onChange={set('nationality')} /></Field>
+        <Field label="Occupation"><Input value={c.job} onChange={set('job')} /></Field>
+        <Field label="Address" className="sm:col-span-2"><Input value={c.address} onChange={set('address')} /></Field>
+        <Field label="Phone"><Input dir="ltr" value={c.phone} onChange={set('phone')} /></Field>
+        <Field label="Email"><Input dir="ltr" type="email" value={c.email} onChange={set('email')} /></Field>
         <Field label="Notes" className="sm:col-span-2"><Textarea value={c.notes} onChange={set('notes')} /></Field>
       </form>
     </Modal>
@@ -49,7 +49,7 @@ export function ClientForm({ client, onSaved, onClose }) {
 }
 
 // Searchable client selector with an inline "new client" action.
-export function ClientPicker({ value, onChange, placeholder = 'Choisir un client…', allowCreate = true, compact = false }) {
+export function ClientPicker({ value, onChange, placeholder = 'Choose a client…', allowCreate = true, compact = false }) {
   const [clients, setClients] = useState([]);
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
@@ -84,7 +84,7 @@ export function ClientPicker({ value, onChange, placeholder = 'Choisir un client
       {open && (
         <div className="absolute z-30 mt-1 w-full min-w-64 rounded-lg border border-slate-200 bg-white shadow-lg">
           <div className="border-b border-slate-100 p-2">
-            <input autoFocus dir="auto" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher (nom, CIN, téléphone)" className="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-sm focus:border-brand focus:outline-none" />
+            <input autoFocus dir="auto" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search (name, ID number, phone)" className="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-sm focus:border-brand focus:outline-none" />
           </div>
           <ul className="max-h-64 overflow-y-auto py-1 text-sm">
             {shown.map((c) => (
@@ -95,12 +95,12 @@ export function ClientPicker({ value, onChange, placeholder = 'Choisir un client
                 </button>
               </li>
             ))}
-            {!shown.length && <li className="px-3 py-3 text-slate-400">Aucun client trouvé</li>}
+            {!shown.length && <li className="px-3 py-3 text-slate-400">No client found</li>}
           </ul>
           {allowCreate && (
             <div className="border-t border-slate-100 p-2">
               <button type="button" onClick={() => { setCreating(true); setOpen(false); }} className="w-full rounded-md px-2 py-1.5 text-start text-sm font-medium text-brand hover:bg-brand-soft">
-                + Nouveau client{q ? ` « ${q} »` : ''}
+                + New client{q ? ` “${q}”` : ''}
               </button>
             </div>
           )}

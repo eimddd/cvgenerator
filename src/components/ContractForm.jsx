@@ -1,7 +1,7 @@
 import { fieldLabel, fieldNumbers } from './DocRenderer';
 import { DateInput } from './ui';
 
-const T = { details: 'معلومات العقد', male: 'ذكر', female: 'أنثى', party: 'الطرف' };
+const T = { details: 'Contract details', male: 'Male', female: 'Female', party: 'Party' };
 const isDate = (key) => /date|birth$|_birth|day$/.test(key) && !/words/.test(key);
 
 function FieldInput({ field, value, onChange, active, onFocus, dir }) {
@@ -13,9 +13,9 @@ function FieldInput({ field, value, onChange, active, onFocus, dir }) {
     onChange: (e) => onChange(field.key, e.target.value),
     onFocus: () => onFocus(field.key),
     className: `w-full rounded-lg border bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand/20 ${active ? 'border-brand' : 'border-slate-300'} ${!value ? 'bg-amber-50/40' : ''}`,
-    placeholder: date ? 'يوم/شهر/سنة' : undefined,
+    placeholder: date ? 'DD/MM/YYYY' : undefined,
   };
-  if (date) return <DateInput {...common} className={`${common.className} text-right`} onChange={(v) => onChange(field.key, v)} warning="تاريخ غير صحيح (يوم/شهر/سنة)" />;
+  if (date) return <DateInput {...common} className={common.className} onChange={(v) => onChange(field.key, v)} warning="Invalid date (DD/MM/YYYY)" />;
   return field.type === 'textarea' ? <textarea rows={4} {...common} /> : <input {...common} />;
 }
 
@@ -30,7 +30,7 @@ export default function ContractForm({ template, values, onChange, activeField, 
   const block = (title, fields, extra) => (
     <section key={title} className="rounded-xl border border-slate-200 bg-white p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-brand">{title}</h3>
+        <h3 className="text-sm font-semibold text-brand" dir="auto">{title}</h3>
         {extra}
       </div>
       <div className="space-y-3">
@@ -45,7 +45,7 @@ export default function ContractForm({ template, values, onChange, activeField, 
   );
 
   return (
-    <div className="space-y-4 font-[family-name:var(--font-arabic)]" dir="rtl">
+    <div className="space-y-4">
       {parties.map((p, i) => {
         const fields = template.fields.filter((f) => f.party === p && f.type !== 'gender');
         const hasGender = template.fields.some((f) => f.key === `${p}_gender`);

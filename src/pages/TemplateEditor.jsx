@@ -5,8 +5,9 @@ import { useEffect, useRef, useState } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import DocRenderer, { LENGTHS, LENGTH_CM, fieldLength } from '../components/DocRenderer';
+import { PageSheets, paginate } from '../components/pages';
 import { loadOriginal, loadTemplate, resetTemplateEdit, saveTemplateEdit, useTemplates } from '../templates';
-import { Button, ErrorNote, Input, Spinner } from '../components/ui';
+import { Button, ErrorNote, Field, Input, Spinner } from '../components/ui';
 
 const SIZES = [8, 9, 10, 11, 12, 13, 14, 16, 18, 20, 24, 28, 36];
 const TO_ALIGN = { start: 'start', end: 'end', center: 'center', justify: 'both' };
@@ -70,6 +71,7 @@ function parseParagraph(el, base) {
   const font = Object.fromEntries(['font', 'fontCs'].filter((k) => first[k]).map((k) => [k, first[k]]));
   const p = { ...base, type: 'p', runs: parseRuns(el, font) };
   p.bidi = el.style.direction === 'rtl';
+  if (el.dataset.pb === '') p.pb = true; else delete p.pb; // "f" is a page break kept in Word's own text
   if (el.style.textAlign && el.style.textAlign !== ALIGN_OF[base.jc]) p.jc = TO_ALIGN[el.style.textAlign] || base.jc;
   if (!el.querySelector('[data-marker]')) delete p.marker; // a line split off a list item has no bullet of its own
   return p;
@@ -116,7 +118,6 @@ function keptFields(fields, blocks, lengths, kinds) {
 
 // ---------- turning selected text into a field ----------
 const KINDS = { name: 'الاسم الكامل', date: 'التاريخ', id: 'رقم البطاقة الوطنية', address: 'العنوان', amount: 'المبلغ', free: 'نص حر' };
-const KIND_NAMES = { name: 'اسم', date: 'تاريخ', id: 'رقم بطاقة', address: 'عنوان', amount: 'مبلغ', free: 'نص حر' };
 // a first guess from the selected words; the type can be changed in the toolbar
 export function guessKind(text) {
   const s = text.trim();
@@ -136,15 +137,33 @@ const paragraphsIn = (root, range) => {
   return hit.length ? hit : [(node.nodeType === Node.TEXT_NODE ? node.parentElement : node).closest('p')].filter(Boolean);
 };
 
-function Tool({ onClick, title, children, active }) {
+function Tool({ onClick, title, children, active, disabled }) {
   // mousedown + preventDefault keeps the text selection in the page
   return (
-    <button type="button" title={title} aria-label={title} onMouseDown={(e) => { e.preventDefault(); onClick(); }}
-      className={`min-w-9 rounded-md border px-2 py-1.5 text-sm ${active ? 'border-brand bg-brand-soft text-brand' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'}`}>
+    <button type="button" title={title} aria-label={title} aria-pressed={active || undefined} disabled={disabled}
+      onMouseDown={(e) => { e.preventDefault(); if (!disabled) onClick(); }}
+      className={`flex h-8 min-w-8 items-center justify-center rounded-md px-1.5 text-sm transition disabled:opacity-40 ${active ? 'bg-brand-soft text-brand' : 'text-slate-700 hover:bg-slate-100'}`}>
       {children}
     </button>
   );
 }
+const Group = ({ children, label }) => <div role="group" aria-label={label} className="flex items-center gap-0.5">{children}</div>;
+const Sep = () => <span className="mx-1.5 h-6 w-px bg-slate-200" aria-hidden="true" />;
+const Icon = ({ d }) => <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg>;
+const ICONS = {
+  left: 'M3 5h14M3 9h9M3 13h14M3 17h9',
+  center: 'M3 5h14M5.5 9h9M3 13h14M5.5 17h9',
+  right: 'M3 5h14M8 9h9M3 13h14M8 17h9',
+  justify: 'M3 5h14M3 9h14M3 13h14M3 17h14',
+  rtl: 'M9 3v11M13 3v11M8 3h6M9 3a3 3 0 0 0 0 6M17 17H5m0 0 2.5-2.5M5 17l2.5 2.5',
+  ltr: 'M7 3v11M11 3v11M6 3h6M7 3a3 3 0 0 0 0 6M3 17h12m0 0-2.5-2.5M15 17l-2.5 2.5',
+  undo: 'M7 5 3 9l4 4M3 9h9a5 5 0 0 1 0 10h-2',
+  redo: 'm13 5 4 4-4 4M17 9H8a5 5 0 0 0 0 10h2',
+  field: 'M3 15h14M5 12V5h4M5 8.5h3M12 12l1.6-7 1.6 7M12.6 9.6h2',
+  pageBreak: 'M5 2v5h10V2M5 18v-5h10v5M2 10h3M8 10h4M15 10h3',
+};
+const KIND_LABELS = { name: 'Name', date: 'Date', id: 'ID card number (CIN)', address: 'Address', amount: 'Amount', free: 'Free text' };
+const LENGTH_LABELS = { short: 'Short', medium: 'Medium', long: 'Long', full: 'Full line' };
 
 export default function TemplateEditor() {
   const { id } = useParams();
@@ -164,6 +183,7 @@ export default function TemplateEditor() {
   const [kinds, setKinds] = useState({});
   const [added, setAdded] = useState([]); // fields created here since the last save
   const [pickedNum, setPickedNum] = useState(null);
+  const [pages, setPages] = useState(1);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
 
@@ -180,7 +200,10 @@ export default function TemplateEditor() {
     const doc = page.current.firstElementChild;
     doc.contentEditable = 'true';
     doc.spellcheck = false;
-    doc.classList.add('doc-editing');
+    doc.classList.add('doc-editing', 'doc-paged');
+    const repaginate = () => page.current && setPages(paginate(page.current.firstElementChild, template.page, true));
+    repaginate();
+    document.fonts?.ready.then(repaginate);
     setDirty(false); setPicked(null); setAdded([]);
     setTitle(template.title || ''); setCategory(template.category || '');
     setLengths(Object.fromEntries(template.fields.map((f) => [f.key, fieldLength(f)])));
@@ -208,9 +231,42 @@ export default function TemplateEditor() {
     });
     return seen;
   }
-  const changed = () => { setDirty(true); setNotice(''); const n = renumber(); if (picked) setPickedNum(n.get(picked) ?? null); };
+  const changed = () => {
+    setDirty(true); setNotice('');
+    const n = renumber(); if (picked) setPickedNum(n.get(picked) ?? null);
+    setPages(paginate(doc(), template.page, true)); // text that no longer fits moves to the next page
+  };
 
-  const exec = (cmd) => { if (selection()) { document.execCommand(cmd); changed(); } };
+  // Word's "Page break": what follows the cursor starts on a new page (pressed again, the break is removed)
+  function pageBreak() {
+    const range = selection();
+    if (!range) { setNotice('Click where the new page should start first.'); return; }
+    let para = range.startContainer.nodeType === Node.TEXT_NODE ? range.startContainer.parentElement : range.startContainer;
+    while (para && para.parentElement !== doc()) para = para.parentElement;
+    if (!para || para.tagName !== 'P') { setNotice('A page break can’t go inside a table or box: click in a normal paragraph.'); return; }
+    if (para.dataset.pb !== undefined) {
+      delete para.dataset.pb; para.style.breakBefore = '';
+      // Word's own break is a "\f" at the start of the text (after any list marker)
+      const walk = document.createTreeWalker(para, NodeFilter.SHOW_TEXT);
+      let text = walk.nextNode();
+      while (text?.parentElement.closest('[data-marker]')) text = walk.nextNode();
+      if (text?.nodeValue.startsWith('\f')) text.nodeValue = text.nodeValue.slice(1);
+      changed(); setNotice('Page break removed.');
+      return;
+    }
+    const before = range.cloneRange();
+    before.selectNodeContents(para);
+    before.setEnd(range.startContainer, range.startOffset);
+    if (before.toString().trim()) {
+      document.execCommand('insertParagraph'); // split at the cursor, like Word
+      para = para.nextElementSibling;
+      delete para.dataset.pb;
+    }
+    para.dataset.pb = ''; para.style.breakBefore = 'page';
+    changed(); setNotice('Page break added: this paragraph now starts a new page. Press Page break again here to remove it.');
+  }
+
+  const exec = (cmd) => { if (selection()) { document.execCommand(cmd); changed(); } else setNotice('Select some text in the contract first.'); };
   function fontSize(pt) {
     if (!selection()) return;
     document.execCommand('fontSize', false, '7'); // marks the selection, then replaced by a real size
@@ -224,8 +280,18 @@ export default function TemplateEditor() {
   }
   function paragraphStyle(prop, value) {
     const range = selection();
-    if (!range) return;
+    if (!range) { setNotice('Click in the paragraph you want to change first.'); return; }
     paragraphsIn(doc(), range).forEach((el) => { el.style[prop] = value; });
+    changed();
+  }
+  // left/right buttons as on screen; stored as start/end, which flip with the paragraph's direction
+  function align(side) {
+    const range = selection();
+    if (!range) { setNotice('Click in the paragraph you want to change first.'); return; }
+    paragraphsIn(doc(), range).forEach((el) => {
+      const rtl = getComputedStyle(el).direction === 'rtl';
+      el.style.textAlign = side === 'left' ? (rtl ? 'end' : 'start') : side === 'right' ? (rtl ? 'start' : 'end') : side;
+    });
     changed();
   }
 
@@ -241,10 +307,10 @@ export default function TemplateEditor() {
   function makeField() {
     const range = selection();
     const text = range?.toString() || '';
-    if (!text.trim()) { setNotice('حدد أولاً الجزء من النص الذي تريد تحويله إلى خانة.'); return; }
+    if (!text.trim()) { setNotice('First select, in the contract, the text to turn into a field (for example a name or a row of dots).'); return; }
     const para = (n) => (n.nodeType === Node.TEXT_NODE ? n.parentElement : n).closest('p');
     if (para(range.startContainer) !== para(range.endContainer) || range.cloneContents().querySelector('[data-run]')) {
-      setNotice('حدد نصاً داخل سطر واحد لا يحتوي على خانة أخرى.');
+      setNotice('Select text inside a single paragraph, with no other field in it.');
       return;
     }
     const start = range.startContainer.nodeType === Node.TEXT_NODE ? range.startContainer.parentElement : range.startContainer;
@@ -293,7 +359,7 @@ export default function TemplateEditor() {
   }
 
   async function save() {
-    if (isImported && (!title.trim() || !category.trim())) { setError(new Error('أدخل عنوان العقد وصنفه قبل الحفظ.')); return; }
+    if (isImported && (!title.trim() || !category.trim())) { setError(new Error('Enter the contract’s title and category before saving.')); return; }
     setSaving(true); setError(null);
     try {
       const blocks = parseBlocks(doc(), template.blocks);
@@ -303,81 +369,136 @@ export default function TemplateEditor() {
       await saveTemplateEdit(next);
       setDirty(false);
       if (isNew) { navigate(`/contracts/templates/${next.id}/edit`, { replace: true }); setSaving(false); return; }
-      setTemplate(next); setNotice('تم حفظ النموذج. العقود الجديدة ستستعمل هذه النسخة.');
+      setTemplate(next); setNotice('Template saved. New contracts will use this version.');
     } catch (e) { setError(e); }
     setSaving(false);
   }
 
   async function removeImported() {
-    if (!confirm('حذف هذا النموذج نهائياً؟ لن تُفتح بعد ذلك العقود المحفوظة التي تستعمله.')) return;
+    if (!confirm('Delete this template permanently? Saved contracts that use it can no longer be opened.')) return;
     try { await resetTemplateEdit(id); setDirty(false); navigate('/contracts'); } catch (e) { setError(e); }
   }
 
   async function reset() {
-    if (!confirm('الرجوع إلى النموذج الأصلي وحذف كل التعديلات؟')) return;
-    try { await resetTemplateEdit(id); setTemplate(await loadOriginal(id)); setNotice('تم الرجوع إلى النموذج الأصلي.'); } catch (e) { setError(e); }
+    if (!confirm('Go back to the original template and erase all your changes?')) return;
+    try { await resetTemplateEdit(id); setTemplate(await loadOriginal(id)); setNotice('The original template has been restored.'); } catch (e) { setError(e); }
   }
 
   if (!template) return <div className="px-5 py-8"><ErrorNote error={error} />{!error && <Spinner />}</div>;
 
+  const back = isNew ? '/contracts/import' : `/contracts/new/${id}`;
   return (
-    <div className="flex min-h-screen flex-col font-[family-name:var(--font-arabic)]" dir="rtl">
-      <div className="no-print sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-5 py-3 backdrop-blur">
+    <div className="flex min-h-screen flex-col bg-slate-100">
+      <header className="no-print border-b border-slate-200 bg-white px-5 py-4">
         <div className="flex flex-wrap items-center gap-3">
-          <Link to={isNew ? '/contracts/import' : `/contracts/new/${id}`} className="text-sm text-slate-500 hover:text-brand">→ {isNew ? 'رجوع' : 'العقد'}</Link>
-          <h1 className="min-w-0 flex-1 truncate font-semibold text-ink">{isNew ? 'مراجعة العقد المستورد' : `تعديل النموذج: ${title || template.title}`}</h1>
-          <Button variant="primary" onClick={save} disabled={saving}>{saving ? 'جارٍ الحفظ…' : dirty || isNew ? 'حفظ النموذج' : 'محفوظ ✓'}</Button>
-          {!isImported && <Button variant="ghost" onClick={reset}>الرجوع إلى الأصل</Button>}
-          {isImported && !isNew && <Button variant="ghost" className="text-red-600" onClick={removeImported}>حذف النموذج</Button>}
-          {!isNew && <Button variant="ghost" onClick={() => navigate(`/contracts/new/${id}`)}>تحرير عقد بهذا النموذج</Button>}
+          <div className="min-w-0 flex-1">
+            <Link to={back} className="text-sm text-slate-500 hover:text-brand">← {isNew ? 'Back to import' : 'Back to contract'}</Link>
+            <h1 className="mt-0.5 truncate text-lg font-semibold text-ink">{isNew ? 'Review imported contract' : 'Edit template'}</h1>
+          </div>
+          {!isImported && <Button variant="ghost" onClick={reset}>Restore original</Button>}
+          {isImported && !isNew && <Button variant="danger" onClick={removeImported}>Delete template</Button>}
+          {!isNew && <Button onClick={() => navigate(`/contracts/new/${id}`)}>Write a contract</Button>}
+          <Button variant="primary" onClick={save} disabled={saving}>{saving ? 'Saving…' : dirty || isNew ? 'Save template' : 'Saved ✓'}</Button>
         </div>
         {isImported && (
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <Input aria-label="عنوان العقد" placeholder="عنوان العقد" dir="auto" value={title} onChange={(e) => { setTitle(e.target.value); setDirty(true); }} />
-            <Input aria-label="الصنف" placeholder="الصنف (اختر أو اكتب صنفاً جديداً)" dir="auto" list="template-categories" value={category} onChange={(e) => { setCategory(e.target.value); setDirty(true); }} />
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <Field label="Contract title"><Input dir="auto" placeholder="e.g. عقد كراء محل سكني" value={title} onChange={(e) => { setTitle(e.target.value); setDirty(true); }} /></Field>
+            <Field label="Category">
+              <Input dir="auto" placeholder="Choose or type a category" list="template-categories" value={category} onChange={(e) => { setCategory(e.target.value); setDirty(true); }} />
+            </Field>
             <datalist id="template-categories">{categories.filter(Boolean).map((c) => <option key={c} value={c} />)}</datalist>
           </div>
         )}
-        {location.state?.warning && <div className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800" role="alert">{location.state.warning}</div>}
-        <div className="mt-3 flex flex-wrap items-center gap-1.5" dir="rtl">
-          <Tool title="غامق (Ctrl+B)" onClick={() => exec('bold')}><b>B</b></Tool>
-          <Tool title="مائل (Ctrl+I)" onClick={() => exec('italic')}><i>I</i></Tool>
-          <Tool title="تسطير (Ctrl+U)" onClick={() => exec('underline')}><u>U</u></Tool>
-          <select aria-label="حجم الخط" defaultValue="" onMouseDown={(e) => e.stopPropagation()}
-            onChange={(e) => { fontSize(+e.target.value); e.target.value = ''; }}
-            className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm">
-            <option value="" disabled>حجم الخط</option>
-            {SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-          <span className="mx-1 h-6 w-px bg-slate-200" />
-          <Tool title="من اليمين إلى اليسار (عربية)" onClick={() => paragraphStyle('direction', 'rtl')}>RTL ←</Tool>
-          <Tool title="من اليسار إلى اليمين (فرنسية / إنجليزية)" onClick={() => paragraphStyle('direction', 'ltr')}>→ LTR</Tool>
-          <span className="mx-1 h-6 w-px bg-slate-200" />
-          <Tool title="محاذاة إلى البداية" onClick={() => paragraphStyle('textAlign', 'start')}>بداية</Tool>
-          <Tool title="توسيط" onClick={() => paragraphStyle('textAlign', 'center')}>وسط</Tool>
-          <Tool title="محاذاة إلى النهاية" onClick={() => paragraphStyle('textAlign', 'end')}>نهاية</Tool>
-          <Tool title="ضبط" onClick={() => paragraphStyle('textAlign', 'justify')}>ضبط</Tool>
-          <span className="mx-1 h-6 w-px bg-slate-200" />
-          <span className="mx-1 h-6 w-px bg-slate-200" />
-          <Tool title="تحويل النص المحدد إلى خانة منقطة" onClick={makeField} active>Transformer en champ</Tool>
-          <select aria-label="نوع الخانة" disabled={!picked} value={kinds[picked] || 'free'} onMouseDown={(e) => e.stopPropagation()} onChange={(e) => setKind(e.target.value)} className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm disabled:opacity-40">
-            {Object.entries(KIND_NAMES).map(([k, name]) => <option key={k} value={k}>{name}</option>)}
-          </select>
-          <span className={`text-xs ${picked ? 'text-slate-600' : 'text-slate-400'}`}>{picked ? `طول الخانة ${pickedNum}:` : 'طول الخانة (انقر على خانة):'}</span>
-          {Object.entries(LENGTHS).map(([len, name]) => (
-            <Tool key={len} title={`طول الخانة: ${name}`} active={picked && lengths[picked] === len} onClick={() => setLength(len)}>{name}</Tool>
-          ))}
-          <span className="mx-1 h-6 w-px bg-slate-200" />
-          <Tool title="تراجع (Ctrl+Z)" onClick={() => exec('undo')}>↶</Tool>
-          <Tool title="إعادة (Ctrl+Y)" onClick={() => exec('redo')}>↷</Tool>
+        {location.state?.warning && (
+          <div className="mt-3 flex gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900" role="alert">
+            <span aria-hidden="true">⚠</span><span>{location.state.warning}</span>
+          </div>
+        )}
+      </header>
+
+      <div className="no-print sticky top-0 z-20 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
+        <div className="flex flex-wrap items-center gap-y-1 px-4 py-1.5">
+          <Group label="History">
+            <Tool title="Undo (Ctrl+Z)" onClick={() => exec('undo')}><Icon d={ICONS.undo} /></Tool>
+            <Tool title="Redo (Ctrl+Y)" onClick={() => exec('redo')}><Icon d={ICONS.redo} /></Tool>
+          </Group>
+          <Sep />
+          <Group label="Font">
+            <select aria-label="Font size" title="Font size" defaultValue="" onMouseDown={(e) => e.stopPropagation()}
+              onChange={(e) => { fontSize(+e.target.value); e.target.value = ''; }}
+              className="h-8 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-700 hover:border-slate-400">
+              <option value="" disabled>Size</option>
+              {SIZES.map((s) => <option key={s} value={s}>{s} pt</option>)}
+            </select>
+            <span className="w-1" />
+            <Tool title="Bold (Ctrl+B)" onClick={() => exec('bold')}><b className="font-serif text-[15px]">B</b></Tool>
+            <Tool title="Italic (Ctrl+I)" onClick={() => exec('italic')}><i className="font-serif text-[15px]">I</i></Tool>
+            <Tool title="Underline (Ctrl+U)" onClick={() => exec('underline')}><u className="font-serif text-[15px]">U</u></Tool>
+          </Group>
+          <Sep />
+          <Group label="Alignment">
+            <Tool title="Align left" onClick={() => align('left')}><Icon d={ICONS.left} /></Tool>
+            <Tool title="Centre" onClick={() => align('center')}><Icon d={ICONS.center} /></Tool>
+            <Tool title="Align right" onClick={() => align('right')}><Icon d={ICONS.right} /></Tool>
+            <Tool title="Justify" onClick={() => align('justify')}><Icon d={ICONS.justify} /></Tool>
+          </Group>
+          <Sep />
+          <Group label="Text direction">
+            <Tool title="Right to left (Arabic)" onClick={() => paragraphStyle('direction', 'rtl')}><Icon d={ICONS.rtl} /></Tool>
+            <Tool title="Left to right (French, English)" onClick={() => paragraphStyle('direction', 'ltr')}><Icon d={ICONS.ltr} /></Tool>
+          </Group>
+          <Sep />
+          <Group label="Pages">
+            <Tool title="Page break: start a new page at the cursor (press again to remove it)" onClick={pageBreak}>
+              <Icon d={ICONS.pageBreak} /><span className="ms-1 hidden text-xs sm:inline">Page break</span>
+            </Tool>
+          </Group>
+          <div className="ms-auto ps-3">
+            <button type="button" onMouseDown={(e) => { e.preventDefault(); makeField(); }}
+              title="Turns the selected text into a dotted line to fill in"
+              className="inline-flex h-9 items-center gap-2 rounded-lg bg-brand px-3.5 text-sm font-semibold text-white shadow-sm hover:bg-[#162d4a]">
+              <Icon d={ICONS.field} /> Make it a field
+            </button>
+          </div>
         </div>
-        <div className="mt-2 text-xs text-slate-500">
-          {notice || 'اكتب أو احذف مباشرة في الصفحة كما في Word. حدد نصاً ثم «Transformer en champ» لإنشاء خانة، وانقر على خانة لتغيير نوعها وطولها.'}
+
+        <div className={`flex flex-wrap items-center gap-x-4 gap-y-2 border-t px-4 py-2 text-sm ${picked ? 'border-brand/20 bg-brand-soft/60' : 'border-slate-100 bg-slate-50'}`}>
+          {picked ? (
+            <>
+              <span className="font-semibold text-brand">Field {pickedNum}</span>
+              <label className="flex items-center gap-2 text-slate-600">Type
+                <select value={kinds[picked] || 'free'} onMouseDown={(e) => e.stopPropagation()} onChange={(e) => setKind(e.target.value)}
+                  className="h-8 rounded-md border border-slate-300 bg-white px-2 text-sm text-ink">
+                  {Object.entries(KIND_LABELS).map(([k, name]) => <option key={k} value={k}>{name}</option>)}
+                </select>
+              </label>
+              <div className="flex items-center gap-2 text-slate-600">Length
+                <div role="group" aria-label="Line length" className="flex overflow-hidden rounded-md border border-slate-300 bg-white">
+                  {Object.keys(LENGTHS).map((len) => (
+                    <button key={len} type="button" aria-pressed={lengths[picked] === len} onMouseDown={(e) => { e.preventDefault(); setLength(len); }}
+                      className={`h-8 border-s border-slate-200 px-3 text-sm first:border-s-0 ${lengths[picked] === len ? 'bg-brand text-white' : 'text-slate-700 hover:bg-slate-50'}`}>
+                      {LENGTH_LABELS[len]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <span className="text-xs text-slate-500">To remove the field, select it in the text and press Delete.</span>
+            </>
+          ) : (
+            <span className="text-slate-500">
+              <b className="font-medium text-slate-700">To create a field:</b> select the text to replace (a name, a date, a row of dots…), then click <b className="font-medium text-brand">Make it a field</b>. Click an existing field to change its type and length.
+            </span>
+          )}
         </div>
+        {notice && <div className="border-t border-slate-100 bg-white px-4 py-1.5 text-sm text-slate-700" role="status">{notice}</div>}
       </div>
+
       {error && <div className="px-5 pt-4"><ErrorNote error={error} /></div>}
       <div className="flex-1 overflow-x-auto p-5" dir="ltr">
-        <div ref={page} onClick={pick} onInput={changed} onKeyDown={onKeyDown} onPaste={onPaste} />
+        <div className="doc-pages" style={{ width: `${template.page.width}pt` }}>
+          <PageSheets page={template.page} count={pages} />
+          <div ref={page} onClick={pick} onInput={changed} onKeyDown={onKeyDown} onPaste={onPaste} />
+        </div>
       </div>
     </div>
   );

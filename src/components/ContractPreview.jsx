@@ -21,11 +21,11 @@ export function useBlankPrint() {
   const print = (template) => {
     flushSync(() => setBlank(template));
     window.addEventListener('afterprint', () => setBlank(null), { once: true });
-    printDocument(`${template.title} — نسخة فارغة`);
+    printDocument(`${template.title} — blank`);
   };
   const portal = blank && (
     <PrintPortal css={pageCss(blank)}>
-      <DocRenderer template={blank} mode="blank" />
+      <DocRenderer template={blank} mode="blank" paged={false} />
     </PrintPortal>
   );
   return [print, portal];
@@ -52,15 +52,15 @@ export default function ContractPreview({ templateId, contractId, onClose }) {
   }, [templateId, contractId]);
 
   const footer = template && (
-    <div className="flex flex-wrap gap-2" dir="rtl">
-      <Button variant="primary" onClick={() => navigate(contractId ? `/contracts/${contractId}` : `/contracts/new/${template.id}`)}>{contractId ? 'فتح العقد' : 'استعمال هذا النموذج'}</Button>
-      <Button onClick={() => printBlank(template)}>نسخة فارغة للطباعة</Button>
-      <Button onClick={() => navigate(`/contracts/templates/${template.id}/edit`)}>تعديل النموذج</Button>
+    <div className="flex flex-wrap gap-2">
+      <Button variant="primary" onClick={() => navigate(contractId ? `/contracts/${contractId}` : `/contracts/new/${template.id}`)}>{contractId ? 'Open contract' : 'Use this template'}</Button>
+      <Button onClick={() => printBlank(template)}>Print blank copy</Button>
+      <Button onClick={() => navigate(`/contracts/templates/${template.id}/edit`)}>Edit template</Button>
     </div>
   );
 
   return (
-    <Modal title={template?.title || 'معاينة'} onClose={onClose} footer={footer} wide>
+    <Modal title={template?.title || 'Preview'} onClose={onClose} footer={footer} wide>
       <ErrorNote error={error} />
       {!template ? !error && <Spinner /> : (
         <div className="max-h-[70vh] overflow-y-auto rounded-lg bg-slate-100 p-3">

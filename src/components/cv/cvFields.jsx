@@ -1,18 +1,11 @@
-// Form pieces for the CV editor: education level, job title autocomplete, driving licence.
+// Form pieces for the CV editor: job title autocomplete, nationality, driving licence, suggestions.
+// The lists in each CV language live in cvLang.js.
 import { useEffect, useId, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { inputClass } from '../ui';
+import { genderFromNationality, nationalityIn, nationalityList, norm } from './cvLang';
 
-// ---------- education level (Moroccan system, in order) ----------
-export const EDUCATION_LEVELS = [
-  ['Enseignement primaire', ['Niveau 1ère année primaire', 'Niveau 2ème année primaire', 'Niveau 3ème année primaire', 'Niveau 4ème année primaire', 'Niveau 5ème année primaire', 'Niveau 6ème année primaire', 'Certificat d’études primaires']],
-  ['Enseignement collégial', ['Niveau 1ère année collège', 'Niveau 2ème année collège', 'Niveau 3ème année collège', 'Brevet d’enseignement collégial']],
-  ['Enseignement secondaire qualifiant', ['Niveau Tronc commun', 'Niveau 1ère année Baccalauréat', 'Niveau 2ème année Baccalauréat', 'Baccalauréat']],
-  ['Formation professionnelle (OFPPT)', ['Spécialisation', 'Qualification', 'Technicien', 'Technicien Spécialisé']],
-  ['Enseignement supérieur', ['Bac+1', 'Bac+2 (DEUG / DUT / BTS / DTS)', 'Licence (Bac+3)', 'Licence Professionnelle (Bac+3)', 'Master (Bac+5)', 'Master Spécialisé (Bac+5)', 'Diplôme d’Ingénieur (Bac+5)', 'Doctorat (Bac+8)']],
-];
-// what the CV shows, e.g. "Baccalauréat – Sciences Physiques"
-export const degreeText = (level, field) => [level, field?.trim()].filter(Boolean).join(' – ');
+export { EDUCATION, degreeText, SKILLS, INTERESTS, LANGUAGE_NAMES, switchCvLang } from './cvLang';
 
 // ---------- job titles ----------
 // Common job titles in Morocco, grouped under search words so "vend" also finds "Conseiller commercial".
@@ -41,7 +34,6 @@ const JOB_GROUPS = {
   'direction management gérant responsable': ['Directeur', 'Directrice', 'Directeur général', 'Gérant', 'Gérante', 'Responsable d’agence', 'Chef d’agence', 'Responsable administratif et financier', 'Responsable des achats', 'Acheteur', 'Chef de projet', 'Coordinateur', 'Coordinatrice', 'Superviseur', 'Superviseuse', 'Manager', 'Entrepreneur', 'Auto-entrepreneur'],
   'stage débutant étudiant': ['Stagiaire', 'Étudiant', 'Étudiante', 'Apprenti', 'Apprentie', 'Jeune diplômé', 'Jeune diplômée'],
 };
-const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’']/g, ' ').toLowerCase().trim();
 const BASE = Object.entries(JOB_GROUPS).flatMap(([tags, titles]) => titles.map((title) => ({ title, words: norm(title).split(/[\s-]+/), tags: tags.split(' ') })));
 export const JOB_TITLE_COUNT = new Set(BASE.map((j) => j.title)).size;
 
@@ -120,29 +112,25 @@ export function JobTitleInput({ value, onChange, placeholder, className = '' }) 
 }
 
 // ---------- nationality ----------
-// "masculine|feminine"; the CV shows the form matching Homme / Femme
-const COMMON_NATIONALITIES = ['Marocain|Marocaine', 'Algérien|Algérienne', 'Tunisien|Tunisienne', 'Mauritanien|Mauritanienne', 'Sénégalais|Sénégalaise', 'Français|Française', 'Espagnol|Espagnole'];
-const OTHER_NATIONALITIES = `Afghan|Afghane;Albanais|Albanaise;Allemand|Allemande;Américain|Américaine;Andorran|Andorrane;Angolais|Angolaise;Antiguais|Antiguaise;Argentin|Argentine;Arménien|Arménienne;Australien|Australienne;Autrichien|Autrichienne;Azerbaïdjanais|Azerbaïdjanaise;Bahaméen|Bahaméenne;Bahreïnien|Bahreïnienne;Bangladais|Bangladaise;Barbadien|Barbadienne;Belge|Belge;Bélizien|Bélizienne;Béninois|Béninoise;Bhoutanais|Bhoutanaise;Biélorusse|Biélorusse;Birman|Birmane;Bolivien|Bolivienne;Bosnien|Bosnienne;Botswanais|Botswanaise;Brésilien|Brésilienne;Britannique|Britannique;Brunéien|Brunéienne;Bulgare|Bulgare;Burkinabè|Burkinabè;Burundais|Burundaise;Cambodgien|Cambodgienne;Camerounais|Camerounaise;Canadien|Canadienne;Cap-Verdien|Cap-Verdienne;Centrafricain|Centrafricaine;Chilien|Chilienne;Chinois|Chinoise;Chypriote|Chypriote;Colombien|Colombienne;Comorien|Comorienne;Congolais|Congolaise;Costaricien|Costaricienne;Croate|Croate;Cubain|Cubaine;Danois|Danoise;Djiboutien|Djiboutienne;Dominicain|Dominicaine;Dominiquais|Dominiquaise;Égyptien|Égyptienne;Émirien|Émirienne;Équatorien|Équatorienne;Érythréen|Érythréenne;Estonien|Estonienne;Eswatinien|Eswatinienne;Éthiopien|Éthiopienne;Fidjien|Fidjienne;Finlandais|Finlandaise;Gabonais|Gabonaise;Gambien|Gambienne;Géorgien|Géorgienne;Ghanéen|Ghanéenne;Grec|Grecque;Grenadien|Grenadienne;Guatémaltèque|Guatémaltèque;Guinéen|Guinéenne;Bissau-Guinéen|Bissau-Guinéenne;Équato-Guinéen|Équato-Guinéenne;Guyanien|Guyanienne;Haïtien|Haïtienne;Hondurien|Hondurienne;Hongrois|Hongroise;Indien|Indienne;Indonésien|Indonésienne;Irakien|Irakienne;Iranien|Iranienne;Irlandais|Irlandaise;Islandais|Islandaise;Israélien|Israélienne;Italien|Italienne;Ivoirien|Ivoirienne;Jamaïcain|Jamaïcaine;Japonais|Japonaise;Jordanien|Jordanienne;Kazakh|Kazakhe;Kényan|Kényane;Kirghize|Kirghize;Kiribatien|Kiribatienne;Kosovar|Kosovare;Koweïtien|Koweïtienne;Laotien|Laotienne;Lésothien|Lésothienne;Letton|Lettone;Libanais|Libanaise;Libérien|Libérienne;Libyen|Libyenne;Liechtensteinois|Liechtensteinoise;Lituanien|Lituanienne;Luxembourgeois|Luxembourgeoise;Macédonien|Macédonienne;Malaisien|Malaisienne;Malawien|Malawienne;Maldivien|Maldivienne;Malgache|Malgache;Malien|Malienne;Maltais|Maltaise;Marshallais|Marshallaise;Mauricien|Mauricienne;Mexicain|Mexicaine;Micronésien|Micronésienne;Moldave|Moldave;Monégasque|Monégasque;Mongol|Mongole;Monténégrin|Monténégrine;Mozambicain|Mozambicaine;Namibien|Namibienne;Nauruan|Nauruane;Néerlandais|Néerlandaise;Néo-Zélandais|Néo-Zélandaise;Népalais|Népalaise;Nicaraguayen|Nicaraguayenne;Nigérian|Nigériane;Nigérien|Nigérienne;Nord-Coréen|Nord-Coréenne;Norvégien|Norvégienne;Omanais|Omanaise;Ougandais|Ougandaise;Ouzbek|Ouzbèke;Pakistanais|Pakistanaise;Palaosien|Palaosienne;Palestinien|Palestinienne;Panaméen|Panaméenne;Papouasien|Papouasienne;Paraguayen|Paraguayenne;Péruvien|Péruvienne;Philippin|Philippine;Polonais|Polonaise;Portugais|Portugaise;Qatarien|Qatarienne;Roumain|Roumaine;Russe|Russe;Rwandais|Rwandaise;Saint-Lucien|Saint-Lucienne;Salomonais|Salomonaise;Salvadorien|Salvadorienne;Samoan|Samoane;Santoméen|Santoméenne;Saoudien|Saoudienne;Serbe|Serbe;Seychellois|Seychelloise;Sierra-Léonais|Sierra-Léonaise;Singapourien|Singapourienne;Slovaque|Slovaque;Slovène|Slovène;Somalien|Somalienne;Soudanais|Soudanaise;Sud-Africain|Sud-Africaine;Sud-Coréen|Sud-Coréenne;Sud-Soudanais|Sud-Soudanaise;Sri-Lankais|Sri-Lankaise;Suédois|Suédoise;Suisse|Suisse;Surinamais|Surinamaise;Syrien|Syrienne;Tadjik|Tadjike;Tanzanien|Tanzanienne;Tchadien|Tchadienne;Tchèque|Tchèque;Thaïlandais|Thaïlandaise;Timorais|Timoraise;Togolais|Togolaise;Tonguien|Tonguienne;Trinidadien|Trinidadienne;Turc|Turque;Turkmène|Turkmène;Tuvaluan|Tuvaluane;Ukrainien|Ukrainienne;Uruguayen|Uruguayenne;Vanuatuan|Vanuatuane;Vénézuélien|Vénézuélienne;Vietnamien|Vietnamienne;Yéménite|Yéménite;Zambien|Zambienne;Zimbabwéen|Zimbabwéenne`.split(';');
-export const NATIONALITIES = [...COMMON_NATIONALITIES, ...OTHER_NATIONALITIES.sort((x, y) => x.localeCompare(y, 'fr'))].map((n) => n.split('|'));
-const findNationality = (value) => NATIONALITIES.find((n) => n.some((form) => norm(form) === norm(value || '')));
-// older CVs have no Homme/Femme: read it from the nationality when the two forms differ
-export const genderOf = (p) => p.gender || (findNationality(p.nationality)?.[1] === p.nationality && findNationality(p.nationality)?.[0] !== p.nationality ? 'f' : 'm');
-export const nationalityFor = (value, gender) => { const n = findNationality(value); return n ? n[gender === 'f' ? 1 : 0] : value; };
+export const genderOf = (p) => p.gender || genderFromNationality(p.nationality);
+export const nationalityFor = (value, gender, lang = 'fr') => nationalityIn(value, lang, gender);
 
-// A list you can search by typing. What's typed only counts if it is in the list.
-export function NationalityInput({ value, gender, onChange }) {
+// A list in the CV's language you can search by typing. What's typed only counts if it is in the list.
+export function NationalityInput({ value, gender, lang = 'fr', onChange }) {
   const [draft, setDraft] = useState(null);
   const form = (n) => n[gender === 'f' ? 1 : 0];
+  const list = nationalityList(lang);
   const q = norm(draft || '');
-  const items = NATIONALITIES.filter((n) => !q || norm(n[0]).includes(q) || norm(n[1]).includes(q)).map(form);
-  const leave = () => { if (draft !== null && findNationality(draft)) onChange(form(findNationality(draft))); setDraft(null); };
+  const items = list.filter((n) => !q || norm(n[0]).includes(q) || norm(n[1]).includes(q)).map(form);
+  const match = (t) => list.find((n) => n.some((x) => norm(x) === norm(t)));
+  const leave = () => { if (draft !== null && match(draft)) onChange(form(match(draft))); setDraft(null); };
   return <SuggestInput value={draft ?? value} onType={setDraft} onChoose={(t) => { onChange(t); setDraft(null); }} onLeave={leave} items={items} />;
 }
 
 export function GenderChoice({ value, onChange }) {
   return (
-    <div className="flex overflow-hidden rounded-lg border border-slate-300 text-sm" role="group" aria-label="Sexe">
-      {[['m', 'Homme'], ['f', 'Femme']].map(([v, label]) => (
+    <div className="flex overflow-hidden rounded-lg border border-slate-300 text-sm" role="group" aria-label="Gender">
+      {[['m', 'Male'], ['f', 'Female']].map(([v, label]) => (
         <button key={v} type="button" aria-pressed={value === v} onClick={() => onChange(v)} className={`flex-1 px-3 py-2 ${value === v ? 'bg-brand text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}>{label}</button>
       ))}
     </div>
@@ -171,24 +159,13 @@ export function LicencePicker({ value, onChange }) {
             <label className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-slate-700">
               <input type="checkbox" checked={!!l} onChange={(e) => set(cat, e.target.checked ? {} : null)} className="h-4 w-4 accent-brand" />{cat}
             </label>
-            {l && <input dir="ltr" inputMode="numeric" maxLength={4} placeholder="Année" aria-label={`Année du permis ${cat}`} value={l.year} onChange={(e) => set(cat, { year: e.target.value.replace(/\D/g, '') })} className="mt-1 w-full rounded border border-slate-300 bg-white px-1.5 py-0.5 text-xs" />}
+            {l && <input dir="ltr" inputMode="numeric" maxLength={4} placeholder="Year" aria-label={`Year of licence ${cat}`} value={l.year} onChange={(e) => set(cat, { year: e.target.value.replace(/\D/g, '') })} className="mt-1 w-full rounded border border-slate-300 bg-white px-1.5 py-0.5 text-xs" />}
           </div>
         );
       })}
     </div>
   );
 }
-
-// ---------- quick picks for skills and interests (French CVs) ----------
-export const SKILL_SUGGESTIONS = [
-  'Travail en équipe', 'Sérieux', 'Ponctuel', 'Motivé', 'Dynamique', 'Sens de l’organisation', 'Sens des responsabilités',
-  'Gestion du stress', 'Gestion du temps', 'Rigueur', 'Autonomie', 'Esprit d’initiative', 'Capacité d’adaptation', 'Polyvalence',
-  'Honnêteté', 'Patience', 'Discrétion', 'Bonne présentation', 'Sens de l’écoute', 'Esprit d’équipe',
-  'Accueil et conseil des clients', 'Communication et relation client', 'Techniques de vente', 'Gestion de la caisse',
-  'Gestion des conflits', 'Respect des règles d’hygiène et de sécurité', 'Informatique et bureautique : Word, Excel',
-  'Maîtrise d’Internet et des réseaux sociaux', 'Permis de conduire et véhicule',
-];
-export const INTEREST_SUGGESTIONS = ['Sport', 'Football', 'Lecture', 'Voyage', 'Musique', 'Cuisine', 'Informatique', 'Bénévolat', 'Dessin', 'Natation', 'Randonnée', 'Photographie', 'Cinéma', 'Jeux d’échecs', 'Couture', 'Jardinage'];
 
 // Click a suggestion to add it; already chosen ones are hidden.
 export function Suggestions({ options, chosen, onAdd }) {

@@ -36,7 +36,7 @@ export default function PhotoCropper({ file, onDone, onClose }) {
   }
 
   return (
-    <Modal title="Recadrer la photo" onClose={onClose} footer={<><Button onClick={onClose}>Annuler</Button><Button variant="primary" onClick={save}>Utiliser cette photo</Button></>}>
+    <Modal title="Crop photo" onClose={onClose} footer={<><Button onClick={onClose}>Cancel</Button><Button variant="primary" onClick={save}>Use this photo</Button></>}>
       <div className="flex flex-col items-center gap-4">
         <div
           className="relative cursor-grab touch-none overflow-hidden rounded-full bg-slate-100 active:cursor-grabbing"
@@ -51,7 +51,7 @@ export default function PhotoCropper({ file, onDone, onClose }) {
           Zoom
           <input type="range" min="1" max="3" step="0.01" value={zoom} className="flex-1" onChange={(e) => { const z = +e.target.value; const c = VIEW / 2; const r = z / zoom; setPos(clamp({ x: c - (c - at.x) * r, y: c - (c - at.y) * r })); setZoom(z); }} />
         </label>
-        <p className="text-xs text-slate-500">Faites glisser la photo pour la centrer.</p>
+        <p className="text-xs text-slate-500">Drag the photo to centre it.</p>
       </div>
     </Modal>
   );

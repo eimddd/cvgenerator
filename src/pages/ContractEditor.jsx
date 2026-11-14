@@ -7,6 +7,8 @@ import ContractForm from '../components/ContractForm';
 import { FitToWidth, PrintPortal, printDocument } from '../components/print';
 import { Button, ErrorNote, Spinner } from '../components/ui';
 import { useBlankPrint } from '../components/ContractPreview';
+import { useSession } from '../lib/auth';
+import { markTemplateUsed } from '../lib/recent';
 
 const PT_TO_PX = 96 / 72;
 
@@ -38,6 +40,10 @@ export default function ContractEditor() {
   const [savedAt, setSavedAt] = useState(null);
   const [error, setError] = useState(null);
   const [printBlank, blankPortal] = useBlankPrint();
+  const userId = useSession()?.user?.id;
+  // opening, saving and printing all move the template to the top of "Recent"
+  const used = () => template && markTemplateUsed(userId, template.id);
+  useEffect(() => { if (template) markTemplateUsed(userId, template.id); }, [template, userId]);
 
   useEffect(() => {
     (async () => {
@@ -71,11 +77,11 @@ export default function ContractEditor() {
         category: template.category, lang: template.lang, title: contractTitle(template, values), values,
         search_text: searchText(template, values),
       });
-      setRecord(saved); setDirty(false); setSavedAt(new Date());
+      setRecord(saved); setDirty(false); setSavedAt(new Date()); markTemplateUsed(userId, template.id);
       if (!record) navigate(`/contracts/${saved.id}`, { replace: true });
     } catch (e) { setError(e); }
     setSaving(false);
-  }, [record, template, values, navigate]);
+  }, [record, template, values, navigate, userId]);
 
   useEffect(() => {
     const onKey = (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); save(); } };
@@ -84,7 +90,7 @@ export default function ContractEditor() {
   }, [save]);
 
   async function remove() {
-    if (!confirm('حذف هذا العقد نهائياً؟')) return;
+    if (!confirm('Delete this contract permanently?')) return;
     try { await deleteContract(record.id); navigate('/contracts/history'); } catch (e) { setError(e); }
   }
 
@@ -99,21 +105,21 @@ export default function ContractEditor() {
   const missing = template.fields.filter((f) => f.type !== 'gender' && !f.optional && !values[f.key]).length;
 
   return (
-    <div className="flex min-h-screen flex-col font-[family-name:var(--font-arabic)]" dir="rtl">
+    <div className="flex min-h-screen flex-col">
       <div className="no-print sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-5 py-3 backdrop-blur">
         <div className="flex flex-wrap items-center gap-3">
-          <Link to={record ? '/contracts/history' : '/contracts'} className="text-sm text-slate-500 hover:text-brand">→ {record ? 'السجل' : 'النماذج'}</Link>
-          <h1 className="min-w-0 flex-1 truncate font-semibold text-ink">{template.title}</h1>
-          <Button variant="primary" onClick={save} disabled={saving}>{saving ? 'جارٍ الحفظ…' : dirty || !record ? 'حفظ' : 'تم الحفظ ✓'}</Button>
-          <Button onClick={() => printDocument(fileName)}>طباعة</Button>
-          <Button onClick={() => printDocument(fileName)} title="في نافذة الطباعة اختر «حفظ بصيغة PDF»">PDF</Button>
-          <Button onClick={() => printBlank(template)} title="العقد بنقط مكان المعلومات، للملء باليد">نسخة فارغة</Button>
-          <Button variant="ghost" onClick={() => (!dirty || confirm('لم يتم حفظ التغييرات. المتابعة؟')) && navigate(`/contracts/templates/${template.id}/edit`)}>تعديل النموذج</Button>
-          {record && <Button variant="ghost" onClick={remove} className="text-red-600">حذف</Button>}
+          <Link to={record ? '/contracts/history' : '/contracts'} className="text-sm text-slate-500 hover:text-brand">← {record ? 'History' : 'Templates'}</Link>
+          <h1 className="min-w-0 flex-1 truncate font-semibold text-ink" dir="auto">{template.title}</h1>
+          <Button variant="primary" onClick={save} disabled={saving}>{saving ? 'Saving…' : dirty || !record ? 'Save' : 'Saved ✓'}</Button>
+          <Button onClick={() => { used(); printDocument(fileName); }}>Print</Button>
+          <Button onClick={() => { used(); printDocument(fileName); }} title="In the print window, choose “Save as PDF”">PDF</Button>
+          <Button onClick={() => { used(); printBlank(template); }} title="The contract with dotted lines instead of the details, to fill in by hand">Blank copy</Button>
+          <Button variant="ghost" onClick={() => (!dirty || confirm('Your changes are not saved. Continue anyway?')) && navigate(`/contracts/templates/${template.id}/edit`)}>Edit template</Button>
+          {record && <Button variant="ghost" onClick={remove} className="text-red-600">Delete</Button>}
         </div>
         <div className="mt-1 text-xs text-slate-400">
-          {missing ? `${missing} خانة فارغة — ستُطبع نقطاً.` : 'كل الخانات مملوءة.'}
-          {savedAt && ` · حُفظ على الساعة ${savedAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`}
+          {missing ? `${missing} empty field${missing > 1 ? 's' : ''}, printed as dotted lines.` : 'All fields are filled in.'}
+          {savedAt && ` · Saved at ${savedAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`}
         </div>
       </div>
       {error && <div className="px-5 pt-4"><ErrorNote error={error} /></div>}
@@ -129,7 +135,7 @@ export default function ContractEditor() {
       </div>
       {blankPortal || (
         <PrintPortal css={pageCss(template)}>
-          <DocRenderer template={template} values={values} mode="print" />
+          <DocRenderer template={template} values={values} mode="print" paged={false} />
         </PrintPortal>
       )}
     </div>

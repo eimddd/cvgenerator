@@ -9,7 +9,7 @@ export const templateById = Object.fromEntries(list.map((t) => [t.id, t]));
 export const categories = [...new Set(list.map((t) => t.category))];
 
 // The template as built from the office's Word file.
-export const loadOriginal = (id) => loaders[`./generated/${id}.json`]?.() ?? Promise.reject(new Error('Modèle introuvable'));
+export const loadOriginal = (id) => loaders[`./generated/${id}.json`]?.() ?? Promise.reject(new Error('Template not found'));
 
 // The office's edited copy (template editor) wins over the original; imported contracts only exist there.
 export async function loadTemplate(id) {
